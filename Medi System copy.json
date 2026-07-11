@@ -1,0 +1,356 @@
+{
+  "name": "Medi System copy",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "3a7a770d-1ea2-492f-a3c3-83f3703e1841",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "288c7a22-3bc4-4f92-ab5e-73f2a9de6864",
+      "name": "Webhook",
+      "webhookId": "3a7a770d-1ea2-492f-a3c3-83f3703e1841"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You are the automated back-end engine for PulseCare Pro, working directly inside an n8n workflow. Your sole responsibility is to process incoming appointment payloads received via the Webhook node and immediately trigger the attached technical tools in a strict, sequential order.\n\n=========================================\nCRITICAL: YOUR AVAILABLE TOOLS\n=========================================\nYou MUST execute the attached tools using their exact node names listed below. Do not use generic tool names:\n1. Google Sheets Operation: \"Append row in sheet in Google Sheets\"\n2. Hospital Management Email: \"Send a message in Gmail1\"\n3. Patient Confirmation Email: \"Send a message in Gmail\"\n\n=========================================\nSTRICT STEP-BY-STEP PIPELINE EXECUTION\n=========================================\nYou are running in a structured webhook environment. The incoming patient data is already available in the webhook body context. Do not try to structure custom object properties when calling the Google Sheets tool. Instead, pass the raw input context or simple strings as expected by the schema.\n\nSTEP 1: SAVE DATA TO AUDIT SHEET\nExecute the tool \"Append row in sheet in Google Sheets\". Do not pass custom keys like 'Name' or 'Phone Number' directly into the tool schema parameters. Simply invoke the tool with the available text/data context, as the tool has its own mapping parameters (\"defineBelow\") already configured to pull from $json.body.\n-> CRITICAL: Wait for a success response from this tool. If it fails, stop immediately and report a database save error.\n\nSTEP 2: NOTIFY MANAGEMENT\nOnly after Step 1 succeeds, execute the tool \"Send a message in Gmail1\". This tool routes a notification to the hospital administration (mtaha22220@gmail.com).\n\nSTEP 3: NOTIFY PATIENT\nOnly after Step 2 succeeds, execute the tool \"Send a message in Gmail\". This tool triggers a premium, polished HTML confirmation template directly to the patient's registered email address.\n\n=========================================\nFINAL RESPONSE PROTOCOL\n=========================================\nOnce all three tools have completed their execution successfully, you must output the following clean text format:\n\n✅ Your appointment has been booked successfully.\nA confirmation email has been sent to your email address.\n\nNever skip any step. Always force execution of the designated tools.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d722caa5-6713-4427-b66d-9a18df653320",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        560,
+        0
+      ],
+      "id": "788b3176-72d9-4c6c-bc01-c87571bd0274",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.email }}",
+        "subject": "=Thank You for Booking Your Appointment",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n</head>\n\n<body style=\"margin:0;padding:0;background:#eef3f9;font-family:Arial,Helvetica,sans-serif;\">\n\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"padding:40px 0;\">\n\n<tr>\n<td align=\"center\">\n\n<table width=\"650\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 5px 18px rgba(0,0,0,.08);\">\n\n<tr>\n<td style=\"background:#16A34A;padding:35px;text-align:center;color:white;\">\n\n<div style=\"font-size:55px;\">✅</div>\n\n<h1 style=\"margin:10px 0 0;\">\nAppointment Confirmed\n</h1>\n\n</td>\n</tr>\n\n<tr>\n<td style=\"padding:40px;\">\n\n<h2 style=\"color:#222;\">\nDear {{ $json.body.patientName }},\n</h2>\n\n<p style=\"font-size:16px;color:#555;line-height:28px;\">\n\nThank you for choosing our medical services.\n\nYour appointment has been successfully confirmed.\n\nBelow are your appointment details.\n\n</p>\n\n<table width=\"100%\" cellpadding=\"14\" cellspacing=\"0\" style=\"border-collapse:collapse;margin-top:30px;border:1px solid #e5e7eb;\">\n\n<tr style=\"background:#f8fafc;\">\n<td width=\"35%\"><strong>Doctor</strong></td>\n<td>{{ $json.body.doctor }}</td>\n</tr>\n\n<tr>\n<td><strong>Specialization</strong></td>\n<td>{{ $json.body.specialization }}</td>\n</tr>\n\n<tr style=\"background:#f8fafc;\">\n<td><strong>Date</strong></td>\n<td>{{ $json.body.appointmentDate }}</td>\n</tr>\n\n<tr>\n<td><strong>Time</strong></td>\n<td>{{ $json.body.appointmentTime }}</td>\n</tr>\n\n</table>\n\n<p style=\"margin-top:35px;color:#555;font-size:16px;line-height:28px;\">\n\nPlease arrive at least <strong>15 minutes before</strong> your scheduled appointment.\n\nIf you need to cancel or reschedule, kindly contact us in advance.\n\n</p>\n\n<div style=\"margin-top:35px;text-align:center;\">\n\n<a href=\"#\" style=\"background:#16A34A;color:white;padding:15px 35px;text-decoration:none;border-radius:8px;font-weight:bold;display:inline-block;\">\nView Appointment\n</a>\n\n</div>\n\n<p style=\"margin-top:40px;font-size:16px;color:#444;\">\n\nWe look forward to seeing you.\n\nThank you for trusting our healthcare services.\n\n</p>\n\n<p style=\"margin-top:30px;\">\n\nBest Regards,<br>\n\n<strong>Medical Appointment Team</strong>\n\n</p>\n\n</td>\n</tr>\n\n<tr>\n<td style=\"background:#f3f4f6;padding:18px;text-align:center;color:#777;font-size:13px;\">\n\n© 2026 Medical Appointment System\n\n</td>\n</tr>\n\n</table>\n\n</td>\n</tr>\n\n</table>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        240
+      ],
+      "id": "d1e2cce3-f826-4e9e-ab3a-afede3224e0c",
+      "name": "Send a message in Gmail",
+      "webhookId": "6b188ab2-1f75-4c3b-bfdc-194b2a067511",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "z3ZNqC5npcW0djYV",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "mtaha22220@gmail.com",
+        "subject": "=🩺 New Appointment Booked",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n</head>\n\n<body style=\"margin:0;padding:0;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif;\">\n\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#f4f7fb;padding:40px 0;\">\n\n<tr>\n<td align=\"center\">\n\n<table width=\"650\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 5px 18px rgba(0,0,0,.08);\">\n\n<tr>\n<td style=\"background:#0F62FE;color:white;padding:25px;text-align:center;font-size:28px;font-weight:bold;\">\n📅 New Appointment Booked\n</td>\n</tr>\n\n<tr>\n<td style=\"padding:35px;\">\n\n<h2 style=\"margin-top:0;color:#333;\">\nA new patient appointment has been booked.\n</h2>\n\n<table width=\"100%\" cellpadding=\"12\" cellspacing=\"0\" style=\"border-collapse:collapse;margin-top:25px;\">\n\n<tr style=\"background:#f8f9fc;\">\n<td><strong>Patient Name</strong></td>\n<td>{{ $json.body.patientName }}</td>\n</tr>\n\n<tr>\n<td><strong>Phone Number</strong></td>\n<td>{{ $json.body.phoneNumber }}</td>\n</tr>\n\n<tr style=\"background:#f8f9fc;\">\n<td><strong>Email</strong></td>\n<td>{{ $json.body.email }}</td>\n</tr>\n\n<tr>\n<td><strong>Doctor</strong></td>\n<td>{{ $json.body.doctor }}</td>\n</tr>\n\n<tr style=\"background:#f8f9fc;\">\n<td><strong>Specialization</strong></td>\n<td>{{ $json.body.specialization }}</td>\n</tr>\n\n<tr>\n<td><strong>Appointment Date</strong></td>\n<td>{{ $json.body.appointmentDate }}</td>\n</tr>\n\n<tr style=\"background:#f8f9fc;\">\n<td><strong>Appointment Time</strong></td>\n<td>{{ $json.body.appointmentTime }}</td>\n</tr>\n\n</table>\n\n<p style=\"margin-top:30px;color:#666;font-size:15px;\">\nPlease review this appointment and prepare accordingly.\n</p>\n\n</td>\n</tr>\n\n<tr>\n<td style=\"background:#f2f5fa;padding:18px;text-align:center;color:#777;font-size:13px;\">\nMedical Appointment System\n</td>\n</tr>\n\n</table>\n\n</td>\n</tr>\n\n</table>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        240
+      ],
+      "id": "c4c66f89-efdc-4fc6-9941-651a3d026549",
+      "name": "Send a message in Gmail1",
+      "webhookId": "7d7c01c2-a215-460c-80e2-ba618c9dfd47",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "z3ZNqC5npcW0djYV",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $execution.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        208,
+        256
+      ],
+      "id": "2033fc28-2c51-44b0-886b-7c7bd29ee03d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3-32b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        16,
+        256
+      ],
+      "id": "ea1fbdbf-113f-463f-83dd-7c2458f6d41f",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "f6vjBEp84wKrSGE2",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1e8i8HzHU5itLAOuD-AO1VYQP4mlDMNLdu1vOc9aZxno",
+          "mode": "list",
+          "cachedResultName": "MediSchedule",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1e8i8HzHU5itLAOuD-AO1VYQP4mlDMNLdu1vOc9aZxno/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1e8i8HzHU5itLAOuD-AO1VYQP4mlDMNLdu1vOc9aZxno/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Phone Number": "={{ $json.body.phoneNumber }}",
+            "Email": "={{ $json.body.email }}",
+            "Doctor": "={{ $json.body.doctor }}",
+            "Specilization": "={{ $json.body.specialization }}",
+            "Date": "={{ $json.body.appointmentDate }}",
+            "Time": "={{ $json.body.appointmentTime }}",
+            "Symptoms": "={{ $json.body.notes }}",
+            "Name": "={{ $json.body.patientName }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Doctor",
+              "displayName": "Doctor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Specilization",
+              "displayName": "Specilization",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Time",
+              "displayName": "Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Symptoms",
+              "displayName": "Symptoms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        368,
+        256
+      ],
+      "id": "4b183d0e-7318-4621-a630-ec6d6f5e4996",
+      "name": "Append row in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rt54LeEpK0VemrTY",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message in Gmail1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "903682ee-2909-410a-bf80-58a94f6123a9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "abc59618a703452de0a965be5dd25e536ddc8c5108ab56b7cf9b9525634938c2"
+  },
+  "nodeGroups": [],
+  "id": "2fcEEZIbGHPI2KmJ",
+  "tags": []
+}
