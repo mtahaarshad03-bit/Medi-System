@@ -65,20 +65,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 timestamp: new Date().toLocaleString()
             };
 
-           try {
-                // Direct call to PulseCare Pro n8n Production Webhook with no-cors mode
-                await fetch('https://tom321.app.n8n.cloud/webhook/3a7a770d-1ea2-492f-a3c3-83f3703e1841', {
+            try {
+                // Standard Fetch call (n8n Webhook node par CORS properly allow kiya ho)
+                const response = await fetch('https://tom321.app.n8n.cloud/webhook/3a7a770d-1ea2-492f-a3c3-83f3703e1841', {
                     method: 'POST',
-                    mode: 'no-cors', // CORS block bypass karne ke liye
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
                     body: JSON.stringify(formData)
                 });
 
-                // no-cors mode mein response.ok hamesha false rehta hai (opaque response)
-                // Lekin request 100% n8n tak deliver ho jati hai. Isliye hum direct success popup dikhayenge.
-                if (popup) popup.style.display = 'flex';
-                form.reset();
-                if (specInput) specInput.value = '';
+                // Ab response status bilkul accurate check hoga!
+                if (response.ok) {
+                    if (popup) popup.style.display = 'flex';
+                    form.reset();
+                    if (specInput) specInput.value = '';
+                } else {
+                    alert('Booking failed! Please try again later.');
+                }
 
             } catch (error) {
                 console.error('Network Error:', error);
@@ -143,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Set minimum date for appointment to today (Fixed ID mismatch)
+    // Set minimum date for appointment to today
     const dateInput = document.getElementById('appointmentDate');
     if (dateInput) {
         const today = new Date().toISOString().split('T')[0];
