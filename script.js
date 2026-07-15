@@ -18,11 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const doctorSelect = document.getElementById('doctorName');
         const specInput = document.getElementById('specialization');
         
-        doctorSelect.value = doctorName;
-        specInput.value = doctorSpecializations[doctorName] || '';
+        if (doctorSelect) doctorSelect.value = doctorName;
+        if (specInput) specInput.value = doctorSpecializations[doctorName] || '';
         
         // Scroll to appointment form
-        document.getElementById('appointment').scrollIntoView({ behavior: 'smooth' });
+        const appointmentSection = document.getElementById('appointment');
+        if (appointmentSection) {
+            appointmentSection.scrollIntoView({ behavior: 'smooth' });
+        }
     };
 
     // Auto-update specialization when doctor is selected
@@ -32,11 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (doctorSelect) {
         doctorSelect.addEventListener('change', (e) => {
             const selectedDoctor = e.target.value;
-            specInput.value = doctorSpecializations[selectedDoctor] || '';
+            if (specInput) specInput.value = doctorSpecializations[selectedDoctor] || '';
         });
     }
 
-    // Form Submission
+    // Form Submission with direct n8n Integration
     const form = document.getElementById('appointmentForm');
     const popup = document.getElementById('successPopup');
     const closePopup = document.getElementById('closePopup');
@@ -58,28 +61,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 specialization: document.getElementById('specialization').value,
                 appDate: document.getElementById('appointmentDate').value,
                 appTime: document.getElementById('appointmentTime').value,
-                notes: document.getElementById('notes').value
+                notes: document.getElementById('notes').value,
+                timestamp: new Date().toLocaleString()
             };
 
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/book-appointment', {
+                // Direct call to PulseCare Pro n8n Production Webhook
+                const response = await fetch('https://tom321.app.n8n.cloud/webhook/3a7a770d-1ea2-492f-a3c3-83f3703e1841', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
 
-                const result = await response.json();
-
-                if (result.success) {
-                    popup.style.display = 'flex';
+                // Check if n8n successfully accepted the request
+                if (response.ok) {
+                    if (popup) popup.style.display = 'flex';
                     form.reset();
                     if (specInput) specInput.value = '';
                 } else {
-                    alert(result.message || 'Booking failed. Please try again.');
+                    alert('Booking failed. n8n workflow returned an error.');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert('Network error. Please ensure the backend is running.');
+                console.error('Network Error:', error);
+                alert('Connection error. Could not reach the booking server.');
             } finally {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
@@ -89,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (closePopup) {
         closePopup.addEventListener('click', () => {
-            popup.style.display = 'none';
+            if (popup) popup.style.display = 'none';
         });
     }
 
@@ -140,8 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Set minimum date for appointment to today
-    const dateInput = document.getElementById('appDate');
+    // Set minimum date for appointment to today (Fixed ID mismatch)
+    const dateInput = document.getElementById('appointmentDate');
     if (dateInput) {
         const today = new Date().toISOString().split('T')[0];
         dateInput.setAttribute('min', today);
