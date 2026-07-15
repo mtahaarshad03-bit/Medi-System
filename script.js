@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 // Direct call to PulseCare Pro n8n Production Webhook
-                const response = await fetch('https://tom321.app.n8n.cloud/webhook-test/3a7a770d-1ea2-492f-a3c3-83f3703e1841', {
+                const response = await fetch('https://tom321.app.n8n.cloud/webhook/3a7a770d-1ea2-492f-a3c3-83f3703e1841', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
