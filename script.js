@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. Form Submission with direct n8n Integration (CORS Bypass Included)
+    // 4. Form Submission with standard fetch (No-cors bypass removed to deliver full JSON payload)
     const form = document.getElementById('appointmentForm');
     const popup = document.getElementById('successPopup');
     const closePopup = document.getElementById('closePopup');
@@ -69,27 +69,31 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             try {
-                // n8n Cloud Webhook call with no-cors mode to bypass browser blocks
-                await fetch('https://tom321.app.n8n.cloud/webhook/3a7a770d-1ea2-492f-a3c3-83f3703e1841', {
+                // Standard fetch request using application/json
+                const response = await fetch('https://tom321.app.n8n.cloud/webhook/3a7a770d-1ea2-492f-a3c3-83f3703e1841', {
                     method: 'POST',
-                    mode: 'no-cors', // CORS security checks bypass
                     headers: { 
-                        'Content-Type': 'text/plain' // no-cors mode mein content-type restrict hoti hai, text/plain use karna safe hai
+                        'Content-Type': 'application/json' 
                     },
                     body: JSON.stringify(formData)
                 });
 
-                // Chunki no-cors mode mein response return nahi hota, request automatic delivery ke baad
-                // hum direct user ko Success Popup show karwa rahe hain.
-                if (popup) popup.style.display = 'flex';
-                form.reset();
-                if (specInput) specInput.value = '';
+                // Check if n8n returned a successful response (e.g., Status 200 OK)
+                if (response.ok) {
+                    if (popup) popup.style.display = 'flex';
+                    form.reset();
+                    if (specInput) specInput.value = '';
+                } else {
+                    const errText = await response.text();
+                    console.error('Server Error:', errText);
+                    alert('Booking failed. Please check if n8n workflow is active.');
+                }
 
             } catch (error) {
-                console.error('Submission Error:', error);
-                alert('Connection error. Could not reach the booking server. Please try again.');
+                console.error('Network Error:', error);
+                alert('Connection error. Could not reach the booking server. Please ensure n8n CORS is configured.');
             } finally {
-                // Button status ko hamesha normal par wapas lekar aayega
+                // Restore button status
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             }
@@ -150,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 9. Set minimum appointment date to Today (Prevents booking back-dates)
+    // 9. Set minimum appointment date to Today
     const dateInput = document.getElementById('appointmentDate');
     if (dateInput) {
         const today = new Date().toISOString().split('T')[0];
